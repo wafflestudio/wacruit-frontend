@@ -1,6 +1,5 @@
-import { QueryClient } from "@tanstack/react-query";
 import { getQuestions } from "../../apis/resume";
-import { myResumeQuery } from "./DashboardLoader";
+import { myResumeQuery } from "../Dashboard/dashboardLoader";
 import {
   Resume,
   ResumeQuestion,
@@ -10,6 +9,18 @@ import {
 } from "../../types/apiTypes";
 import { LoaderReturnType } from "../../types/commonTypes";
 import { getInvitation, getUser } from "../../apis/user";
+import {
+  PageDataLoader,
+  createCompositeLoader,
+} from "../../lib/animatedTransition/functions/createCompositeLoader";
+
+type ResumeInputs = (ResumeSubmissionCreate & {
+  question_num: number;
+  question_content: string;
+  content_limit: number;
+})[];
+
+type UserInformationInputs = UserUpdate & UserInvitationEmails;
 
 export const resumeQuestionQuery = (id: number) => ({
   queryKey: ["resume", "question", id],
@@ -29,9 +40,12 @@ export const userInvitationQuery = () => ({
   staleTime: Infinity,
 });
 
-export const resumeLoader =
-  (queryClient: QueryClient) =>
-  async ({ params }: { params: Record<string, unknown> }) => {
+const resumeDataLoader: PageDataLoader<{
+  initialInputs: ResumeInputs;
+  userInputs: UserInformationInputs;
+}> =
+  (queryClient) =>
+  async ({ params }) => {
     const resumeQuery = myResumeQuery(Number(params.recruit_id));
     const questionQuery = resumeQuestionQuery(Number(params.recruit_id));
     const cachedResume = queryClient.getQueryData<{ items: Resume[] }>(
@@ -54,7 +68,7 @@ export const resumeLoader =
       question_content: string;
       content_limit: number;
     })[] = [];
-    question.items.forEach((item, index) => {
+    question.items.forEach((item) => {
       const resumeIndex = resume.items.findIndex(
         (resumeItem) => resumeItem.question_id === item.question_num,
       );
@@ -87,5 +101,7 @@ export const resumeLoader =
       userInputs,
     };
   };
+
+export const resumeLoader = createCompositeLoader(resumeDataLoader);
 
 export type ResumeLoaderReturnType = LoaderReturnType<typeof resumeLoader>;

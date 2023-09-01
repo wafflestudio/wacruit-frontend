@@ -1,15 +1,29 @@
 import { Link, useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { RuleSet, css } from "styled-components";
 import { zIndex } from "../../../lib/zIndex";
 import { useQuery } from "@tanstack/react-query";
 import { checkAuth, deleteSsoToken, tryLogin } from "../../../apis/auth";
 import { useState } from "react";
 import { LoadingBackgroundBlink } from "../../../lib/loading";
 import { useQueryClient } from "@tanstack/react-query";
+import { createAnimationSetup } from "../../../lib/animatedTransition/functions/createAnimation";
+import {
+  slideFromTop,
+  slideToTop,
+} from "../../../lib/animatedTransition/functions/commonAnimation";
+import {
+  Animator,
+  usePageAnimation,
+} from "../../../lib/animatedTransition/hooks/usePageAnimation";
 
-export default function Header() {
+type HeaderProps = {
+  isTransitionActive?: boolean;
+};
+
+export default function Header(props: HeaderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const animation = usePageAnimation(headerTransitionAnimator);
   const [showApply, setShowApply] = useState(false);
 
   /**
@@ -24,7 +38,7 @@ export default function Header() {
 
   if (!authState) {
     return (
-      <Container>
+      <Container $transitionAnimation={animation}>
         <Link to="/">
           <img src={"/icon/header/Logo.jpeg"} height={27} />
         </Link>
@@ -34,7 +48,7 @@ export default function Header() {
   }
 
   return (
-    <Container>
+    <Container $transitionAnimation={animation}>
       <Link to="/">
         <img src={"/icon/header/Logo.jpeg"} height={27} />
       </Link>
@@ -101,7 +115,16 @@ export default function Header() {
   );
 }
 
-const Container = styled.header`
+const headerTransitionAnimator: Animator = ({
+  duration,
+  animationStatus,
+}) => css`
+  ${createAnimationSetup(duration)}
+  animation-name: ${animationStatus === "unmount" ? slideToTop : slideFromTop};
+  pointer-events: ${animationStatus === "unmount" ? "none" : "auto"};
+`;
+
+const Container = styled.header<{ $transitionAnimation: RuleSet }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -116,6 +139,8 @@ const Container = styled.header`
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
   font-family: Pretendard, sans-serif;
+  animation-fill-mode: both;
+  ${(props) => props.$transitionAnimation}
 `;
 
 const Nav = styled.nav`

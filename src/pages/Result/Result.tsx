@@ -1,17 +1,22 @@
-import { useLoaderData, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import Header from "../components/home/Header/Header";
-import { ResultLoaderReturnType } from "./Loader/ResultLoader";
+import { useNavigate } from "react-router-dom";
+import styled, { RuleSet } from "styled-components";
+import Header from "../../components/home/Header/Header";
+import { ResultLoaderReturnType } from "./resultLoader";
 import { useEffect } from "react";
+import { usePageData } from "../../lib/animatedTransition/hooks/usePageData";
+import { usePageAnimation } from "../../lib/animatedTransition/hooks/usePageAnimation";
+import { commonOpacityAnimator } from "../../lib/animatedTransition/functions/commonAnimation";
 
 export default function Result() {
-  const { result } = useLoaderData() as ResultLoaderReturnType;
+  const { result } = usePageData<ResultLoaderReturnType>();
+  const animation = usePageAnimation(commonOpacityAnimator);
+
   if (result.status === 3) {
     //불합격 시
     return (
       <>
         <Header />
-        <Main>
+        <Main $transitionAnimation={animation}>
           <Container>
             <LogoWrapper>
               <img src="/image/result/fail.svg"></img>
@@ -44,7 +49,7 @@ export default function Result() {
     return (
       <>
         <Header />
-        <Main>
+        <Main $transitionAnimation={animation}>
           <Container>
             <LogoWrapper>
               <img src="/image/result/pass.svg"></img>
@@ -74,7 +79,7 @@ export default function Result() {
   return (
     <>
       <Header />
-      <Main>
+      <Main $transitionAnimation={animation}>
         <Container>
           <LogoWrapper>
             <img src="/image/result/pass.svg"></img>
@@ -101,12 +106,14 @@ export function NoResult() {
   }, []);
   return <div></div>;
 }
-const Main = styled.main`
+
+const Main = styled.main<{ $transitionAnimation: RuleSet }>`
   width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  ${(props) => props.$transitionAnimation}
 `;
 
 const Container = styled.div`

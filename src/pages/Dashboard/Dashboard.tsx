@@ -1,21 +1,26 @@
-import { styled } from "styled-components";
-import { ProgressList } from "../components/rookie/Progress/ProgressList";
-import Header from "../components/home/Header/Header";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import { RuleSet, styled } from "styled-components";
+import { ProgressList } from "../../components/rookie/Progress/ProgressList.tsx";
+import Header from "../../components/home/Header/Header.tsx";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import MarkdownRenderer from "../lib/MarkdownRenderer";
+import MarkdownRenderer from "../../lib/MarkdownRenderer.tsx";
 import {
   DashboardLoaderReturnType,
   myResumeQuery,
   recruitingDetailQuery,
-} from "./Loader/DashboardLoader.ts";
-import { deleteResume } from "../apis/resume.ts";
+} from "./dashboardLoader.ts";
+import { deleteResume } from "../../apis/resume.ts";
+import { usePageAnimation } from "../../lib/animatedTransition/hooks/usePageAnimation.ts";
+import { usePageData } from "../../lib/animatedTransition/hooks/usePageData.ts";
+import { dashboardMainAnimator } from "./dashboardAnimation.ts";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useParams();
-  const navigate = useNavigate();
-  const initialData = useLoaderData() as DashboardLoaderReturnType;
+  const initialData = usePageData<DashboardLoaderReturnType>();
+  const animation = usePageAnimation(dashboardMainAnimator);
+
   const { data: recruiting } = useQuery({
     ...recruitingDetailQuery(Number(params.recruit_id)),
     initialData: initialData.recruiting,
@@ -27,8 +32,8 @@ export default function Dashboard() {
 
   return (
     <>
-      <Header />
-      <Main>
+      <Header isTransitionActive={false} />
+      <Main $transitionAnimation={animation}>
         <Title>
           <MarkdownRenderer
             markdownString={recruiting.name}
@@ -79,7 +84,7 @@ export default function Dashboard() {
             />
           </div>
         </AnnouncementButton>
-        <BottomContainer>
+        <BottomContainer className="fromBottom">
           <ProgressList
             problems={recruiting.problem_status}
             hasResume={resume.items.length > 0}
@@ -114,13 +119,16 @@ export default function Dashboard() {
   );
 }
 
-const Main = styled.main`
+const Main = styled.main<{
+  $transitionAnimation: RuleSet;
+}>`
   position: relative;
   font-family: Pretendard, sans-serif;
   font-style: normal;
   line-height: normal;
   padding: 23vh max(calc(50vw - 650px), 30px);
   padding-bottom: 30px;
+  ${(props) => props.$transitionAnimation};
 `;
 
 const Title = styled.h1`

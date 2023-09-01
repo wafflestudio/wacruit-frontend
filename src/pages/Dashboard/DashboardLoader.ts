@@ -1,8 +1,11 @@
-import { QueryClient } from "@tanstack/react-query";
 import { getRecruitingById } from "../../apis/recruiting";
 import { Recruiting, Resume } from "../../types/apiTypes";
 import { LoaderReturnType } from "../../types/commonTypes";
 import { getMyResumes } from "../../apis/resume";
+import {
+  PageDataLoader,
+  createCompositeLoader,
+} from "../../lib/animatedTransition/functions/createCompositeLoader";
 
 export const recruitingDetailQuery = (id: number) => ({
   queryKey: ["recruiting", "detail", id],
@@ -16,9 +19,12 @@ export const myResumeQuery = (id: number) => ({
   staleTime: Infinity,
 });
 
-export const dashboardLoader =
-  (queryClient: QueryClient) =>
-  async ({ params }: { params: Record<string, unknown> }) => {
+const dashboardDataLoader: PageDataLoader<{
+  recruiting: Recruiting;
+  resume: { items: Resume[] };
+}> =
+  (queryClient) =>
+  async ({ params }) => {
     const recruitingQuery = recruitingDetailQuery(Number(params.recruit_id));
     const resumeQuery = myResumeQuery(Number(params.recruit_id));
     const cachedRecruiting = queryClient.getQueryData<Recruiting>(
@@ -38,6 +44,10 @@ export const dashboardLoader =
           : await queryClient.fetchQuery(resumeQuery),
     };
   };
+
+export const dashboardLoader = createCompositeLoader(dashboardDataLoader, {
+  duration: 500,
+});
 
 export type DashboardLoaderReturnType = LoaderReturnType<
   typeof dashboardLoader

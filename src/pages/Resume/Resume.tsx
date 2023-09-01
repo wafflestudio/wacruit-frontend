@@ -1,24 +1,28 @@
-import styled from "styled-components";
-import Header from "../components/home/Header/Header.tsx";
-import QuestionaireInput from "../components/rookie/QuestionaireInput/QuestionaireInput";
+import styled, { RuleSet } from "styled-components";
+import Header from "../../components/home/Header/Header.tsx";
+import QuestionaireInput from "../../components/rookie/QuestionaireInput/QuestionaireInput.tsx";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import UserInfoForm from "../components/rookie/UserInfoForm/UserInfoForm.tsx";
-import { putResume } from "../apis/resume.ts";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import UserInfoForm from "../../components/rookie/UserInfoForm/UserInfoForm.tsx";
+import { putResume } from "../../apis/resume.ts";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ResumeSubmissionCreate,
   UserInvitationEmails,
   UserUpdate,
-} from "../types/apiTypes.ts";
-import { ResumeLoaderReturnType } from "./Loader/ResumeLoader.ts";
-import { patchUser, patchUserInvitationEmails } from "../apis/user.ts";
+} from "../../types/apiTypes.ts";
+import { ResumeLoaderReturnType } from "./resumeLoader.ts";
+import { patchUser, patchUserInvitationEmails } from "../../apis/user.ts";
+import { usePageData } from "../../lib/animatedTransition/hooks/usePageData.ts";
+import { usePageAnimation } from "../../lib/animatedTransition/hooks/usePageAnimation.ts";
+import { commonOpacityAnimator } from "../../lib/animatedTransition/functions/commonAnimation.ts";
 
 export default function Resume() {
   const { recruit_id } = useParams<{ recruit_id: string }>();
-  const initialData = useLoaderData() as ResumeLoaderReturnType;
-  const [resumeInput, setResumeInput] = useState(initialData.initialInputs);
-  const [userInfoInput, setUserInfoInput] = useState(initialData.userInputs);
+  const { initialInputs, userInputs } = usePageData<ResumeLoaderReturnType>();
+  const animation = usePageAnimation(commonOpacityAnimator);
+  const [resumeInput, setResumeInput] = useState(initialInputs);
+  const [userInfoInput, setUserInfoInput] = useState(userInputs);
 
   const putResume = useSubmit(Number(recruit_id));
   const navigate = useNavigate();
@@ -59,7 +63,7 @@ export default function Resume() {
   return (
     <>
       <Header />
-      <Main>
+      <Main $transitionAnimation={animation}>
         <Title>자기소개서</Title>
         <Description>모든 문항에 성실히 응답해주세요.</Description>
         <Questionaires>
@@ -181,12 +185,13 @@ const checkRequired = (
 //   return validInput;
 // };
 
-const Main = styled.main`
+const Main = styled.main<{ $transitionAnimation: RuleSet }>`
   position: relative;
   font-family: Pretendard, sans-serif;
   font-style: normal;
   line-height: normal;
   padding: 23vh max(calc(50vw - 534px), 30px);
+  ${(props) => props.$transitionAnimation}
 `;
 
 const Title = styled.h1`
